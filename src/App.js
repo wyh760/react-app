@@ -16,6 +16,7 @@ function Header(props){
   </header>
 }
 
+// 컴포넌트 방법 분석중....
 function Nav(props){
   //console.log("props===>"+props);
   //console.log("props.topics.length===>"+props.topics.length);
