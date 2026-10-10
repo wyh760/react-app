@@ -98,15 +98,12 @@ function App() {
 
   // [수정 2026-10-08] 처음 화면 로딩 시 목록 조회 (GET /api/topics)
   useEffect(()=>{
-      console.log('useEffect 실행: 목록 조회 시작');
     fetch(API_URL)
       .then(res=>{
         if(!res.ok) throw new Error('조회 실패: '+res.status);
         return res.json();
       })
-      .then(data=>{
-      console.log('목록 조회 결과', data);
-        setTopics(data)})
+      .then(data=>setTopics(data))
       .catch(err=>{
         console.error(err);
         alert('서버에서 목록을 불러오지 못했어요. Spring Boot가 실행 중인지 확인하세요.');
