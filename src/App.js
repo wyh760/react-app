@@ -48,8 +48,7 @@ function Article(props){
   return (<article>
       <h2>{props.title}</h2> 
       <p>{props.body}</p>
-      {/* 글 작성/수정 시 전달된 오늘 날짜 표시 */}
-      {props.createdAt && <p style={{ color: '#888', fontSize: '0.9em' }}>작성일: {props.createdAt}</p>}
+      {props.createdAt && <p className="date-text">작성일: {props.createdAt}</p>}
   </article>
   );
 }
@@ -101,42 +100,34 @@ function App() {
   const [id, setId] = useState(null);
   const [topics, setTopics] = useState([]);
 
-  // [권한 및 회원가입 관련 상태 관리]
-  const [isLogin, setIsLogin] = useState(false);             // 로그인 여부
-  const [hasAuthPermission, setHasAuthPermission] = useState(false); // 메뉴 생성/관리 권한 여부
-  const [showSignupModal, setShowSignupModal] = useState(false);      // 회원가입 모달 노출 여부
-  const [registeredUser, setRegisteredUser] = useState(null);         // 가입된 회원 정보 저장용
+  const [isLogin, setIsLogin] = useState(false);             
+  const [hasAuthPermission, setHasAuthPermission] = useState(false); 
+  const [showSignupModal, setShowSignupModal] = useState(false);      
+  const [registeredUser, setRegisteredUser] = useState(null);         
 
-  // 처음 화면 로딩 시 목록 조회 (GET /api/topics)
   useEffect(()=>{
-      console.log('useEffect 실행: 목록 조회 시작');
     fetch(API_URL)
       .then(res=>{
         if(!res.ok) throw new Error('조회 실패: '+res.status);
         return res.json();
       })
-      .then(data=>{
-      console.log('목록 조회 결과', data);
-        setTopics(data)})
+      .then(data=>setTopics(data))
       .catch(err=>{
         console.error(err);
-        alert('서버에서 목록을 불러오지 못했어요. Spring Boot가 실행 중인지 확인하세요.');
+        alert('서버에서 목록을 불러오지 못했어요.');
       });
   }, []);
 
-  // 생성 (POST /api/topics) - 오늘 날짜 자동 포함
   async function createTopic(_title, _body){
     try{
       const today = new Date().toISOString().slice(0, 10);
-
       const res = await fetch(API_URL, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({title: _title, body: _body, createdAt: today})
       });
-      if(!res.ok) throw new Error('생성 실패: '+res.status);
+      if(!res.ok) throw new Error('생성 실패');
       const saved = await res.json();
-      console.log('목록 create 저장', saved);
       setTopics([...topics, saved]);
       setMode('READ');
       setId(saved.id);
@@ -146,17 +137,15 @@ function App() {
     }
   }
 
-  // 수정 (PUT /api/topics/{id}) - 오늘 날짜 자동 포함
   async function updateTopic(_title, _body){
     try{
       const today = new Date().toISOString().slice(0, 10);
-
       const res = await fetch(API_URL+'/'+id, {
         method:'PUT',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({title: _title, body: _body, createdAt: today})
       });
-      if(!res.ok) throw new Error('수정 실패: '+res.status);
+      if(!res.ok) throw new Error('수정 실패');
       const saved = await res.json();
       const newTopics = topics.map(t => t.id === saved.id ? saved : t);
       setTopics(newTopics);
@@ -167,11 +156,10 @@ function App() {
     }
   }
 
-  // 삭제 (DELETE /api/topics/{id})
   async function deleteTopic(){
     try{
       const res = await fetch(API_URL+'/'+id, {method:'DELETE'});
-      if(!res.ok) throw new Error('삭제 실패: '+res.status);
+      if(!res.ok) throw new Error('삭제 실패');
       setTopics(topics.filter(t => t.id !== id));
       setMode('WELCOME'); 
       setId(null);
@@ -186,9 +174,7 @@ function App() {
 
   if(mode === 'WELCOME'){
     content = <Article title='Welcome' body='Hello, WEB'></Article>
-
   } else if(mode ==='READ'){
-     
     let title, body, createdAt = null;
     for(let i=0; i<topics.length; i++){
        if(topics[i].id === id){
@@ -197,21 +183,16 @@ function App() {
         createdAt = topics[i].createdAt;
       }    
     }
-    console.log('현재 read topics 상태:', topics);
-    
     content = <Article title={title} body={body} createdAt={createdAt}></Article>
     
-    // 로그인 상태이고 메뉴 생성 권한(hasAuthPermission)이 체크된 경우에만 Update, Delete 버튼을 가로로 노출
     if(isLogin && hasAuthPermission) {
       contextControl = <>
-        <input type="button" value="Update" onClick={()=>{ setMode('UPDATE'); }} style={{ marginRight: '5px' }}/>
+        <input type="button" value="Update" onClick={()=>{ setMode('UPDATE'); }} className="mr-5"/>
         <input type="button" value="Delete" onClick={deleteTopic}/>
       </>;
     }
-
   } else if(mode === 'CREATE'){
      content = <Create onCreate={createTopic}></Create>
-
   } else if(mode ==='UPDATE'){
      let title, body = null;
     for(let i=0; i<topics.length; i++){
@@ -224,10 +205,10 @@ function App() {
   }
 
   return (
-     <div style={{ position: 'relative' }}>
+     <div className="app-container">
       
-      {/* [상단 우측 영역] 회원가입 버튼과 로그인 입력창 분리 배치 */}
-      <div style={{ textAlign: 'right', padding: '10px', background: '#f1f1f1' }}>
+      {/* 상단 우측 영역 */}
+      <div className="top-bar">
         {isLogin ? (
           <span>
             {registeredUser ? `${registeredUser.name} (${registeredUser.empNo})` : '관리자'}님 환영합니다! 
@@ -236,47 +217,69 @@ function App() {
               setHasAuthPermission(false);
               setRegisteredUser(null);
               setMode('WELCOME'); 
-            }} style={{ marginLeft: '10px' }} />
+            }} className="ml-10" />
           </span>
         ) : (
-          <div style={{ display: 'inline-block' }}>
-            {/* 1. 맨 앞줄에 배치된 회원가입 버튼 */}
+          <div>
             <input 
               type="button" 
               value="회원가입" 
               onClick={() => setShowSignupModal(true)} 
-              style={{ marginRight: '15px' }}
+              className="mr-5"
             />
 
-            {/* 2. 아이디 및 비밀번호 입력란 */}
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
               const inputId = e.target.loginId.value;
               const inputPw = e.target.loginPw.value;
 
-              if((inputId === 'admin' && inputPw === '898989') || (registeredUser && registeredUser.memberId === inputId)) {
+              if(!inputId || !inputPw) {
+                alert('아이디와 비밀번호를 입력해주세요.');
+                return;
+              }
+
+              if (inputId === 'admin' && inputPw === '898989') {
                 setIsLogin(true);
                 setHasAuthPermission(true); 
-                alert('로그인되었습니다.');
-              } else {
-                alert('아이디 또는 비밀번호가 틀렸습니다.');
+                alert('관리자 계정으로 로그인되었습니다.');
+                return;
+              }
+
+              try {
+                const res = await fetch(MEMBER_API_URL + '/login', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ memberId: inputId, password: inputPw })
+                });
+
+                if(!res.ok) {
+                  alert('아이디 또는 비밀번호가 틀렸습니다.');
+                  return;
+                }
+
+                const loginUser = await res.json();
+                setIsLogin(true);
+                setHasAuthPermission(loginUser.hasAuth); 
+                setRegisteredUser(loginUser);
+                alert(loginUser.name + '님 로그인되었습니다.');
+
+              } catch(err) {
+                console.error(err);
+                alert('로그인 통신 중 오류가 발생했습니다.');
               }
             }} style={{ display: 'inline' }}>
-              <input type="text" name="loginId" placeholder="ID" autoComplete="off" style={{ marginRight: '5px', width: '100px' }} />
-              <input type="password" name="loginPw" placeholder="PW" style={{ marginRight: '5px', width: '100px' }} />
+              <input type="text" name="loginId" placeholder="ID" autoComplete="off" className="login-input" />
+              <input type="password" name="loginPw" placeholder="PW" className="login-input" />
               <input type="submit" value="Login" />
             </form>
           </div>
         )}
       </div>
 
-      {/* [회원가입 모달 창 팝업 UI + 스프링 부트 서버 전송 기능 연동] */}
+      {/* 회원가입 모달 창 */}
       {showSignupModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
-        }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '5px', width: '320px', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+        <div className="modal-backdrop">
+          <div className="modal-box">
             <h3>회원가입</h3>
             <form onSubmit={async (e) => {
               e.preventDefault();
@@ -292,7 +295,6 @@ function App() {
               }
 
               try {
-                // 스프링 부트 백엔드(`POST /api/members/signup`)로 데이터 전송 및 DB 저장 요청
                 const res = await fetch(MEMBER_API_URL + '/signup', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -305,31 +307,29 @@ function App() {
                   })
                 });
 
-                if(!res.ok) throw new Error('회원가입 서버 전송 실패');
+                if(!res.ok) throw new Error('회원가입 실패');
 
                 const savedMember = await res.json();
-                console.log('DB 저장 완료된 회원:', savedMember);
-
                 setRegisteredUser(savedMember);
                 setShowSignupModal(false); 
-                alert('회원가입 및 DB 저장이 완료되었습니다! 로그인해주세요.');
+                alert('회원가입이 완료되었습니다! 로그인해주세요.');
 
               } catch(err) {
                 console.error(err);
-                alert('회원가입 중 오류가 발생했습니다. 스프링 부트 서버를 확인해주세요.');
+                alert('회원가입 중 오류가 발생했습니다.');
               }
             }}>
-              <p><input type="text" name="modalId" placeholder="아이디" style={{ width: '100%' }} autoComplete="off" /></p>
-              <p><input type="password" name="modalPw" placeholder="비밀번호" style={{ width: '100%' }} /></p>
-              <p><input type="text" name="modalName" placeholder="이름" style={{ width: '100%' }} autoComplete="off" /></p>
-              <p><input type="text" name="modalEmpNo" placeholder="사번" style={{ width: '100%' }} autoComplete="off" /></p>
+              <p><input type="text" name="modalId" placeholder="아이디" className="modal-input" autoComplete="off" /></p>
+              <p><input type="password" name="modalPw" placeholder="비밀번호" className="modal-input" /></p>
+              <p><input type="text" name="modalName" placeholder="이름" className="modal-input" autoComplete="off" /></p>
+              <p><input type="text" name="modalEmpNo" placeholder="사번" className="modal-input" autoComplete="off" /></p>
               <p style={{ fontSize: '0.9em' }}>
                 <label>
                   <input type="checkbox" name="modalAuth" /> 메뉴 생성 및 관리 권한 부여
                 </label>
               </p>
-              <div style={{ textAlign: 'right', marginTop: '15px' }}>
-                <input type="button" value="취소" onClick={() => setShowSignupModal(false)} style={{ marginRight: '5px' }} />
+              <div className="button-group">
+                <input type="button" value="취소" onClick={() => setShowSignupModal(false)} className="mr-5" />
                 <input type="submit" value="가입 완료" />
               </div>
             </form>
@@ -337,25 +337,13 @@ function App() {
         </div>
       )}
 
-      <Header title="WEB" onChangeMode={
-        ()=>{
-            setMode('WELCOME'); 
-        }
-      }></Header> 
-
-      <Nav topics={topics} onChangeMode={
-        (id)=>{
-          setMode('READ'); 
-          setId(id);
-        }        
-      }></Nav>
-
+      <Header title="WEB" onChangeMode={()=>{ setMode('WELCOME'); }}></Header> 
+      <Nav topics={topics} onChangeMode={(id)=>{ setMode('READ'); setId(id); }}></Nav>
       {content}   
 
-      {/* [수정] Create, Update, Delete 버튼들을 가로로 나열 */}
-      <div style={{ marginTop: '10px' }}>
+      <div className="action-buttons-container">
         {isLogin && hasAuthPermission && (mode === 'WELCOME' || mode === 'READ') && (
-          <input type="button" value="Create" onClick={()=>{ setMode('CREATE'); }} style={{ marginRight: '5px' }}/>
+          <input type="button" value="Create" onClick={()=>{ setMode('CREATE'); }} className="mr-5"/>
         )}
         {contextControl}
       </div>
