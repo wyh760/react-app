@@ -1,6 +1,14 @@
 import './App.css';
 import { useState, useEffect } from 'react';
 
+// [수정: 2026-10-13 17:22] 네비게이션 리스트와 매칭할 이미지 파일들 임포트
+import starbucksImg from './images/starbucks.png';
+import twosomeImg from './images/경동시장 카페.png';
+import megaImg from './images/메가커피.png';
+import localCafeImg from './images/동네카페.png';
+import kimbapImg from './images/동네김밥.png';
+import gyongdongImg from './images/경동시장 카페.png';
+
 // Spring Boot API 주소 (firstproject, 8080)
 const API_URL = 'http://localhost:8080/api/topics';
 const MEMBER_API_URL = 'http://localhost:8080/api/members';
@@ -49,6 +57,20 @@ function Article(props){
       <h2>{props.title}</h2> 
       <p>{props.body}</p>
       {props.createdAt && <p className="date-text">작성일: {props.createdAt}</p>}
+
+      {/* [수정: 2026-10-13 17:22] Welcome 및 READ 화면일 때 빨간색 동그라미 이미지 영역 표시 */}
+      {props.showImageCircle && props.imageCircleData && (
+        <div className="image-circle-container">
+          <img 
+            src={props.imageCircleData.image} 
+            alt={props.imageCircleData.name} 
+            className="circle-image"
+          />
+          <p className="circle-desc">
+            {props.imageCircleData.desc}
+          </p>
+        </div>
+      )}
   </article>
   );
 }
@@ -104,6 +126,16 @@ function App() {
   const [hasAuthPermission, setHasAuthPermission] = useState(false); 
   const [showSignupModal, setShowSignupModal] = useState(false);      
   const [registeredUser, setRegisteredUser] = useState(null);         
+
+  // [수정: 2026-10-13 17:22] 네비게이션 리스트 항목별 이미지 및 설명 데이터 정의
+  const menuImages = [
+    { name: '1. 스타벅스 왕십리', image: starbucksImg, desc: '스타벅스 왕십리점 매장 전경입니다.' },
+    { name: '2. 투썸은 한적해', image: twosomeImg, desc: '여유롭게 즐기기 좋은 투썸 매장입니다.' },
+    { name: '3. 메가커피 불편해', image: megaImg, desc: '노란색 외관이 특징인 메가커피입니다.' },
+    { name: '4. 동네카페', image: localCafeImg, desc: '아늑한 분위기의 동네 카페입니다.' },
+    { name: '5. 동네 맛집 김밥...', image: kimbapImg, desc: '신선한 재료로 만든 맛있는 김밥입니다.' },
+    { name: '6. 경동시장 카페', image: gyongdongImg, desc: '경동시장 내에 위치한 독특한 카페입니다.' },
+  ];
 
   useEffect(()=>{
     fetch(API_URL)
@@ -173,7 +205,15 @@ function App() {
   let contextControl = null;
 
   if(mode === 'WELCOME'){
-    content = <Article title='Welcome' body='Hello, WEB'></Article>
+    const selectedIndex = topics.findIndex(t => t.id === id);
+    const currentImageData = selectedIndex !== -1 ? menuImages[selectedIndex % menuImages.length] : menuImages[0];
+
+    content = <Article 
+      title='Welcome' 
+      body='Hello, WEB' 
+      showImageCircle={true} 
+      imageCircleData={currentImageData}
+    ></Article>
   } else if(mode ==='READ'){
     let title, body, createdAt = null;
     for(let i=0; i<topics.length; i++){
@@ -183,7 +223,17 @@ function App() {
         createdAt = topics[i].createdAt;
       }    
     }
-    content = <Article title={title} body={body} createdAt={createdAt}></Article>
+
+    const selectedIndex = topics.findIndex(t => t.id === id);
+    const currentImageData = selectedIndex !== -1 ? menuImages[selectedIndex % menuImages.length] : menuImages[0];
+
+    content = <Article 
+      title={title} 
+      body={body} 
+      createdAt={createdAt} 
+      showImageCircle={true} 
+      imageCircleData={currentImageData}
+    ></Article>
     
     if(isLogin && hasAuthPermission) {
       contextControl = <>
@@ -207,7 +257,7 @@ function App() {
   return (
      <div className="app-container">
       
-      {/* 상단 우측 영역 */}
+      {/* 상단 우측 영역 (아이디/비번 입력란 및 로그인/회원가입) */}
       <div className="top-bar">
         {isLogin ? (
           <span>
@@ -337,7 +387,7 @@ function App() {
         </div>
       )}
 
-      <Header title="WEB" onChangeMode={()=>{ setMode('WELCOME'); }}></Header> 
+      <Header title="WEB" onChangeMode={()=>{ setMode('WELCOME'); setId(null); }}></Header> 
       <Nav topics={topics} onChangeMode={(id)=>{ setMode('READ'); setId(id); }}></Nav>
       {content}   
 

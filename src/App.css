@@ -9,7 +9,7 @@ body {
   padding: 20px;
 }
 
-/* 상단 우측 로그인/회원가입 영역 */
+/* [수정: 2026-10-13 17:22] 상단 우측 로그인/회원가입 영역 및 입력란 정렬 */
 .top-bar {
   text-align: right;
   padding: 10px;
@@ -73,4 +73,41 @@ body {
 .date-text {
   color: #888;
   font-size: 0.9em;
+}
+
+/* [수정: 2026-10-13 17:22] 빨간색 동그라미 이미지 영역 위치 (위로 올리고 왼쪽으로 이동) */
+.image-circle-container {
+  border: 3px solid red;
+  border-radius: 50%;
+  width: 320px;
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px;
+  
+  /* 위쪽으로 끌어올리고 왼쪽으로 밀어줌 */
+  margin: -270px 0 0 200px; 
+  
+  background-color: #fafafa;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.circle-image {
+  width: 75%;
+  height: 65%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.circle-desc {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+  color: #333;
 }
