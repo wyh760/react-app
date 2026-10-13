@@ -230,7 +230,7 @@ function App() {
 
             <form onSubmit={async (e) => {
               e.preventDefault();
-              const inputId = e.target.loginId.value;
+              const inputId = e.target.loginId.value.trim();
               const inputPw = e.target.loginPw.value;
 
               if(!inputId || !inputPw) {
@@ -283,10 +283,10 @@ function App() {
             <h3>회원가입</h3>
             <form onSubmit={async (e) => {
               e.preventDefault();
-              const idVal = e.target.modalId.value;
+              const idVal = e.target.modalId.value.trim();
               const pwVal = e.target.modalPw.value;
-              const nameVal = e.target.modalName.value;
-              const empNoVal = e.target.modalEmpNo.value;
+              const nameVal = e.target.modalName.value.trim();
+              const empNoVal = e.target.modalEmpNo.value.trim();
               const authChecked = e.target.modalAuth.checked;
 
               if(!idVal || !pwVal) {
