@@ -231,7 +231,7 @@ function App() {
             <form onSubmit={async (e) => {
               e.preventDefault();
               const inputId = e.target.loginId.value.trim();
-              const inputPw = e.target.loginPw.value;
+              const inputPw = e.target.loginPw.value.trim();
 
               if(!inputId || !inputPw) {
                 alert('아이디와 비밀번호를 입력해주세요.');
@@ -284,7 +284,7 @@ function App() {
             <form onSubmit={async (e) => {
               e.preventDefault();
               const idVal = e.target.modalId.value.trim();
-              const pwVal = e.target.modalPw.value;
+              const pwVal = e.target.modalPw.value.trim();
               const nameVal = e.target.modalName.value.trim();
               const empNoVal = e.target.modalEmpNo.value.trim();
               const authChecked = e.target.modalAuth.checked;
