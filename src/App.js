@@ -319,7 +319,8 @@ function App() {
               }
             }} style={{ display: 'inline' }}>
               <input type="text" name="loginId" placeholder="ID" autoComplete="off" className="login-input" />
-              <input type="password" name="loginPw" placeholder="PW" className="login-input" />
+              {/* 비밀번호 6자리 제한 수정 - 2026-10-14 11:21 */}
+              <input type="password" name="loginPw" placeholder="PW" maxLength={6} className="login-input" />
               <input type="submit" value="Login" />
             </form>
           </div>
@@ -370,7 +371,8 @@ function App() {
               }
             }}>
               <p><input type="text" name="modalId" placeholder="아이디" className="modal-input" autoComplete="off" /></p>
-              <p><input type="password" name="modalPw" placeholder="비밀번호" className="modal-input" /></p>
+              {/* 회원가입 비밀번호 6자리 제한 수정 - 2026-10-14 11:21 */}
+              <p><input type="password" name="modalPw" placeholder="비밀번호" maxLength={6} className="modal-input" /></p>
               <p><input type="text" name="modalName" placeholder="이름" className="modal-input" autoComplete="off" /></p>
               <p><input type="text" name="modalEmpNo" placeholder="사번" className="modal-input" autoComplete="off" /></p>
               <p style={{ fontSize: '0.9em' }}>
