@@ -1,14 +1,6 @@
 import './App.css';
 import { useState, useEffect } from 'react';
 
-// [수정: 2026-10-13 17:22] 네비게이션 리스트와 매칭할 이미지 파일들 임포트
-import starbucksImg from './images/starbucks.png';
-import twosomeImg from './images/경동시장 카페.png';
-import megaImg from './images/메가커피.png';
-import localCafeImg from './images/동네카페.png';
-import kimbapImg from './images/동네김밥.png';
-import gyongdongImg from './images/경동시장 카페.png';
-
 // Spring Boot API 주소 (firstproject, 8080)
 const API_URL = 'http://localhost:8080/api/topics';
 const MEMBER_API_URL = 'http://localhost:8080/api/members';
@@ -58,16 +50,16 @@ function Article(props){
       <p>{props.body}</p>
       {props.createdAt && <p className="date-text">작성일: {props.createdAt}</p>}
 
-      {/* [수정: 2026-10-13 17:22] Welcome 및 READ 화면일 때 빨간색 동그라미 이미지 영역 표시 */}
-      {props.showImageCircle && props.imageCircleData && (
+      {/* [수정: 2026-10-15 16:30] imageUrl이 존재할 때만 원형 이미지 영역 표시 */}
+      {props.imageUrl && (
         <div className="image-circle-container">
           <img 
-            src={props.imageCircleData.image} 
-            alt={props.imageCircleData.name} 
+            src={props.imageUrl} 
+            alt={props.title} 
             className="circle-image"
           />
           <p className="circle-desc">
-            {props.imageCircleData.desc}
+            {props.title} 관련 이미지입니다.
           </p>
         </div>
       )}
@@ -85,11 +77,13 @@ function Create(props){
         event.preventDefault();
         const title = event.target.title.value;
         const body = event.target.body.value;
-        props.onCreate(title, body);
+        const imageUrl = event.target.imageUrl.value; 
+        props.onCreate(title, body, imageUrl);
       }
     }>
       <p><input type="text" name="title" placeholder="title"/></p>
       <p><textarea name="body" placeholder="body"></textarea></p>
+      <p><input type="text" name="imageUrl" placeholder="Image URL (예: /images/cafe1.png)"/></p>
       <p><input type="submit" value="Create"></input></p>
     </form>
   </article>
@@ -98,19 +92,22 @@ function Create(props){
 function Update(props){
   const [title, setTitle] = useState(props.title);
   const [body, setBody] = useState(props.body);
+  const [imageUrl, setImageUrl] = useState(props.imageUrl || ''); 
 
  return <article>
     <h2>Update</h2>
     <form onSubmit={
       event=>{
         event.preventDefault();
-        props.onUpdate(title, body);
+        props.onUpdate(title, body, imageUrl); 
        }
     }>
       <p><input type="text" name="title" placeholder="title" value={title}
         onChange={event=>setTitle(event.target.value)}/></p>
       <p><textarea name="body" placeholder="body" value={body}
         onChange={event=>setBody(event.target.value)}></textarea></p>
+      <p><input type="text" name="imageUrl" placeholder="Image URL" value={imageUrl}
+        onChange={event=>setImageUrl(event.target.value)}/></p>
       <p><input type="submit" value="Update"></input></p>
     </form>
   </article>
@@ -122,20 +119,18 @@ function App() {
   const [id, setId] = useState(null);
   const [topics, setTopics] = useState([]);
 
-  const [isLogin, setIsLogin] = useState(false);             
-  const [hasAuthPermission, setHasAuthPermission] = useState(false); 
+  // [수정: 2026-10-15 16:30] 새로고침 시 로그인 풀림 방지: localStorage에서 인증 상태 초기화 복원
+  const [isLogin, setIsLogin] = useState(() => {
+    return localStorage.getItem('isLogin') === 'true';
+  });             
+  const [hasAuthPermission, setHasAuthPermission] = useState(() => {
+    return localStorage.getItem('hasAuthPermission') === 'true';
+  }); 
   const [showSignupModal, setShowSignupModal] = useState(false);      
-  const [registeredUser, setRegisteredUser] = useState(null);         
-
-  // [수정: 2026-10-13 17:22] 네비게이션 리스트 항목별 이미지 및 설명 데이터 정의
-  const menuImages = [
-    { name: '1. 스타벅스 왕십리', image: starbucksImg, desc: '스타벅스 왕십리점 매장 전경입니다.' },
-    { name: '2. 투썸은 한적해', image: twosomeImg, desc: '여유롭게 즐기기 좋은 투썸 매장입니다.' },
-    { name: '3. 메가커피 불편해', image: megaImg, desc: '노란색 외관이 특징인 메가커피입니다.' },
-    { name: '4. 동네카페', image: localCafeImg, desc: '아늑한 분위기의 동네 카페입니다.' },
-    { name: '5. 동네 맛집 김밥...', image: kimbapImg, desc: '신선한 재료로 만든 맛있는 김밥입니다.' },
-    { name: '6. 경동시장 카페', image: gyongdongImg, desc: '경동시장 내에 위치한 독특한 카페입니다.' },
-  ];
+  const [registeredUser, setRegisteredUser] = useState(() => {
+    const savedUser = localStorage.getItem('registeredUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });         
 
   useEffect(()=>{
     fetch(API_URL)
@@ -150,13 +145,13 @@ function App() {
       });
   }, []);
 
-  async function createTopic(_title, _body){
+  async function createTopic(_title, _body, _imageUrl){
     try{
       const today = new Date().toISOString().slice(0, 10);
       const res = await fetch(API_URL, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({title: _title, body: _body, createdAt: today})
+        body:JSON.stringify({title: _title, body: _body, createdAt: today, imageUrl: _imageUrl})
       });
       if(!res.ok) throw new Error('생성 실패');
       const saved = await res.json();
@@ -169,13 +164,13 @@ function App() {
     }
   }
 
-  async function updateTopic(_title, _body){
+  async function updateTopic(_title, _body, _imageUrl){
     try{
       const today = new Date().toISOString().slice(0, 10);
       const res = await fetch(API_URL+'/'+id, {
         method:'PUT',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({title: _title, body: _body, createdAt: today})
+        body:JSON.stringify({title: _title, body: _body, createdAt: today, imageUrl: _imageUrl})
       });
       if(!res.ok) throw new Error('수정 실패');
       const saved = await res.json();
@@ -205,34 +200,30 @@ function App() {
   let contextControl = null;
 
   if(mode === 'WELCOME'){
-    const selectedIndex = topics.findIndex(t => t.id === id);
-    const currentImageData = selectedIndex !== -1 ? menuImages[selectedIndex % menuImages.length] : menuImages[0];
+    // [수정: 2026-10-15 16:30] WELCOME 화면에서는 첫 번째 토픽 이미지가 강제로 뜨지 않도록 빈 값 처리
+    const defaultImage = ''; 
 
     content = <Article 
       title='Welcome' 
       body='Hello, WEB' 
-      showImageCircle={true} 
-      imageCircleData={currentImageData}
+      imageUrl={defaultImage}
     ></Article>
   } else if(mode ==='READ'){
-    let title, body, createdAt = null;
+    let title, body, imageUrl, createdAt = null;
     for(let i=0; i<topics.length; i++){
        if(topics[i].id === id){
         title = topics[i].title;
         body = topics[i].body;
+        imageUrl = topics[i].imageUrl; 
         createdAt = topics[i].createdAt;
       }    
     }
-
-    const selectedIndex = topics.findIndex(t => t.id === id);
-    const currentImageData = selectedIndex !== -1 ? menuImages[selectedIndex % menuImages.length] : menuImages[0];
 
     content = <Article 
       title={title} 
       body={body} 
       createdAt={createdAt} 
-      showImageCircle={true} 
-      imageCircleData={currentImageData}
+      imageUrl={imageUrl} 
     ></Article>
     
     if(isLogin && hasAuthPermission) {
@@ -244,14 +235,15 @@ function App() {
   } else if(mode === 'CREATE'){
      content = <Create onCreate={createTopic}></Create>
   } else if(mode ==='UPDATE'){
-     let title, body = null;
+     let title, body, imageUrl = null;
     for(let i=0; i<topics.length; i++){
        if(topics[i].id === id){
         title = topics[i].title;
         body = topics[i].body;
+        imageUrl = topics[i].imageUrl; 
       }    
     }
-    content = <Update title={title} body={body} onUpdate={updateTopic}></Update> 
+    content = <Update title={title} body={body} imageUrl={imageUrl} onUpdate={updateTopic}></Update> 
   }
 
   return (
@@ -266,6 +258,10 @@ function App() {
               setIsLogin(false); 
               setHasAuthPermission(false);
               setRegisteredUser(null);
+              // [수정: 2026-10-15 16:30] 로그아웃 시 localStorage에 저장된 로그인 정보 삭제
+              localStorage.removeItem('isLogin');
+              localStorage.removeItem('hasAuthPermission');
+              localStorage.removeItem('registeredUser');
               setMode('WELCOME'); 
             }} className="ml-10" />
           </span>
@@ -291,6 +287,9 @@ function App() {
               if (inputId === 'admin' && inputPw === '898989') {
                 setIsLogin(true);
                 setHasAuthPermission(true); 
+                // [수정: 2026-10-15 16:30] 관리자 로그인 성공 시 localStorage에 인증 정보 저장
+                localStorage.setItem('isLogin', 'true');
+                localStorage.setItem('hasAuthPermission', 'true');
                 alert('관리자 계정으로 로그인되었습니다.');
                 return;
               }
@@ -311,6 +310,12 @@ function App() {
                 setIsLogin(true);
                 setHasAuthPermission(loginUser.hasAuth); 
                 setRegisteredUser(loginUser);
+                
+                // [수정: 2026-10-15 16:30] 일반 회원 로그인 성공 시 localStorage에 인증 정보 저장
+                localStorage.setItem('isLogin', 'true');
+                localStorage.setItem('hasAuthPermission', loginUser.hasAuth);
+                localStorage.setItem('registeredUser', JSON.stringify(loginUser));
+
                 alert(loginUser.name + '님 로그인되었습니다.');
 
               } catch(err) {
